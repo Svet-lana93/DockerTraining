@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: docker-backend
+    command: npm run start
+    restart: unless-stopped
+    environment:
+      - PORT=3003
+      - MONGO_URL=mongodb://db:27017/backend
+    depends_on:
+      - db
+    networks:
+      - docker-network
+
+  db:
+    image: mongo:latest
+    container_name: docker-db
+    volumes:
+      - mongodb_backend:/data/db
+    networks:
+      - docker-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: docker-frontend
+    restart: unless-stopped
+    command: serve -s build -l 3000
+    networks:
+      - docker-network
+
+  frontend2:
+    build:
+      context: frontend2
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./frontend2/app:/app
+
+  nginx:
+    image: "nginx:stable-alpine"
+    container_name: docker-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf.prod:/etc/nginx/conf.d/nginx.prod.conf
+      - ./nginx/php-fpm.conf:/etc/nginx/conf.d/php-fpm.conf
+      - ./php-fpm/app:/app
+    depends_on:
+      - frontend
+      - backend
+      - php-fpm
+    networks:
+      - docker-network
+
+  php-fpm:
+    build: ./php-fpm
+    container_name: docker-php-fpm
+    volumes:
+      - ./php-fpm/app:/app
+    networks:
+      - docker-network
+
+volumes:
+  mongodb_backend:
+
+networks:
+  docker-network:
+    driver: bridge

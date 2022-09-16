@@ -1,0 +1,14 @@
+server {
+    listen 80;
+
+    server_name docker-study.com;
+
+    location / {
+        proxy_pass http://frontend:3000;
+    }
+
+    location /backend {
+        proxy_pass http://backend:3003;
+        rewrite ^/backend/(.*) /$1 break;
+     }
+}

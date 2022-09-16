@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  backend:
+    command: npm run dev
+    volumes:
+      - ./backend/src:/app/src
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    command: npm run start
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./frontend/src:/app/src
+    environment:
+      WDS_SOCKET_PORT: 0
+
+  nginx:
+    volumes:
+      - ./nginx/nginx.conf.dev:/etc/nginx/conf.d/nginx.dev.conf
+      - ./nginx/php-fpm.conf:/etc/nginx/conf.d/php-fpm.conf
+      - ./php-fpm/app:/app
